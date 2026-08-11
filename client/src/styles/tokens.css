@@ -1,0 +1,56 @@
+:root {
+  --color-coral: #F75940;
+  --color-coral-hover: #E74A2F;
+  --color-coral-active: #D93D1F;
+  --color-charcoal: #212529;
+  --color-deep-blue: #3F52E3;
+  --color-rose: #E23E57;
+  --color-success: #17B978;
+  --color-info: #17A2B8;
+  --color-danger: #FF253A;
+  --color-warning: #EC9B3B;
+  --color-white: #FFFFFF;
+  --color-gray-1: #F3F4F5;
+  --color-gray-2: #E9ECEF;
+  --color-gray-3: #EEEEEE;
+  --color-border: #DEE2E6;
+  --color-text-secondary: #6C757D;
+  --color-text-tertiary: #495057;
+
+  --font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  --radius-subtle: 8px;
+  --radius-rounded: 16px;
+  --radius-pill: 20px;
+  --radius-circle: 9999px;
+
+  --shadow-raised: rgba(0, 0, 0, 0.1) 0px 2px 4px 0px;
+  --shadow-lifted: rgba(0, 0, 0, 0.176) 0px 8px 16px 0px;
+  --shadow-floating: rgba(0, 0, 0, 0.2) 0px 4px 24px 0px;
+
+  --breakpoint-tablet: 640px;
+  --breakpoint-desktop: 1024px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-charcoal);
+  background: var(--color-white);
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-family);
+}
