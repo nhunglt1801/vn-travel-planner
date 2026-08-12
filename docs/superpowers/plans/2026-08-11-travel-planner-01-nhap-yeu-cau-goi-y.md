@@ -929,6 +929,8 @@ git commit -m "feat(client): add InputScreen with prompt hero and collapsible re
 - Tiêu thụ: `Place`, `ImageResponse` từ `../types` (Plan 0, Task 3); `fetchImage` từ `../api/image` (Task 6); `Skeleton`, `ErrorBanner` (Plan 0, Task 4).
 - Kết quả: `<PlaceCard place, onClick />`; `<SuggestionsScreen places, loading, error, onRetry, onSelectPlace, onBack />` — `onSelectPlace(place)` được gọi khi bấm vào card; ở Plan 1 tạm thời chưa mở modal chi tiết (việc đó thuộc Plan 2), Task 9 sẽ nối `onSelectPlace` với một xử lý tối giản.
 
+**Cập nhật 2026-08-12 (theo yêu cầu trực tiếp của người dùng):** Khi `error` có giá trị, `SuggestionsScreen` không còn hiện `ErrorBanner` như một banner nội tuyến trong luồng nữa — component `ErrorBanner` (Plan 0, Task 4) được đổi thành **modal cảnh báo lỗi giữa màn hình** (overlay mờ phía sau, khối modal căn giữa chứa nội dung lỗi + nút "Thử lại" căn giữa bên dưới, responsive theo breakpoint để không vỡ giao diện). Xem chi tiết thiết kế ở spec mục 6. Vì `ErrorBanner` là component dùng chung, thay đổi này áp dụng luôn cho `ItineraryScreen` ở Plan 3 (khi được xây), không cần sửa riêng lần nữa.
+
 - [ ] **Bước 1: Viết `client/src/components/PlaceCard.module.css`**
 
 ```css
