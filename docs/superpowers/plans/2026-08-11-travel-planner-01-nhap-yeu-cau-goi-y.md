@@ -53,6 +53,8 @@
 **Giao diện phụ thuộc:**
 - Kết quả: `getWikipediaImage(query: string): Promise<{ url: string; alt: string } | null>` — dùng ở `services/imageFallback.ts` (Task 3) làm nguồn ảnh chính. Trả `null` khi thất bại (không tìm thấy trang liên quan, không có bản tiếng Việt tương ứng, không có ảnh, lỗi mạng) thay vì throw — nơi gọi tự quyết định fallback.
 
+**Cập nhật 2026-08-12 #2 (sửa mâu thuẫn trong chính thiết kế ở bản đầu, phát hiện qua unit test khi triển khai):** `GENERIC_WORDS` bản đầu có cả `'a'`, `'an'` (mạo từ tiếng Anh) — nhưng `"an"` cũng chính là âm tiết đầu của tên địa danh thật "An Bàng", nên nếu giữ `'a'`/`'an'` trong danh sách, `stripGenericWords('an-bang-beach')` sẽ làm mất luôn từ khoá `"an"` cần giữ để nhận diện đúng địa danh. Đã bỏ `'a'`, `'an'` khỏi `GENERIC_WORDS` bên dưới (giữ `'the'`, `'of'`, `'in'`, `'at'`, `'and'` vì các từ này không trùng với âm tiết tên địa danh romanized tiếng Việt) — đã kiểm chứng lại cả 3 test case (`an-bang-beach` → `"an bang"`, `con-dao-beach` → `"con dao"`, `the-beach` → `""`) đều đúng sau khi sửa.
+
 **Cập nhật 2026-08-12 (sửa lỗi ảnh sai chủ đề, phát hiện khi kiểm thử với API key thật):** Bản gốc bên dưới (tìm full-text trực tiếp trên `vi.wikipedia.org` bằng `imageQuery`) đã bị thay thế hoàn toàn — `imageQuery` do AI sinh ra là slug tiếng Anh (vd `"an-bang-beach"`), search full-text trực tiếp trên Wikipedia tiếng Việt bằng chuỗi này rất dễ khớp nhầm sang trang không liên quan (đã xác nhận thực tế: ra ảnh cờ Myanmar cho query `"an-bang-beach"`, lặp lại ổn định nhiều lần, không phải ngẫu nhiên). Xem chi tiết nguyên nhân và quy trình mới ở spec mục 4.2. Toàn bộ các bước gọi API dưới đây đã được kiểm chứng thủ công bằng `curl` thật trước khi đưa vào code — không phải suy đoán.
 
 - [ ] **Bước 1: Viết `server/src/services/wikipedia.ts`**
@@ -65,7 +67,7 @@ interface WikiImageResult {
 
 const GENERIC_WORDS = new Set([
   'beach', 'beaches', 'island', 'islands', 'bay', 'national', 'park',
-  'city', 'town', 'province', 'district', 'the', 'of', 'in', 'at', 'a', 'an', 'and',
+  'city', 'town', 'province', 'district', 'the', 'of', 'in', 'at', 'and',
 ]);
 
 function tokenize(text: string): string[] {
