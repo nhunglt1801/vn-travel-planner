@@ -8,8 +8,8 @@
 }
 
 .title {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-h2);
   margin: var(--space-lg) 0 0;
 }
 
@@ -20,14 +20,14 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-subtle);
   font-family: var(--font-family);
-  font-size: 18px;
+  font-size: var(--font-size-body);
   resize: vertical;
 }
 
 .promptInput:focus {
   outline: none;
-  border: 2px solid var(--color-deep-blue);
-  box-shadow: 0 0 0 3px rgba(63, 82, 227, 0.1);
+  border: var(--focus-border);
+  box-shadow: var(--focus-shadow);
 }
 
 .advancedToggle {
@@ -57,8 +57,8 @@
 }
 
 .fieldLabel {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--font-size-h6);
+  font-weight: var(--font-weight-h6);
   color: var(--color-text-secondary);
 }
 
