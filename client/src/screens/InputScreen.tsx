@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { SuggestRequest, Budget, Companion } from '../types';
-// @ts-expect-error - types are at index.d.ts but not properly exported in package.json
-import { DatePicker, RainbowThemeContainer } from 'react-rainbow-components';
+import { DayPicker } from 'react-day-picker';
+import { vi } from 'react-day-picker/locale';
+import 'react-day-picker/style.css';
 import styles from './InputScreen.module.css';
 
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
@@ -27,14 +28,6 @@ const COMPANION_OPTIONS: { value: Companion; label: string }[] = [
   { value: 'family', label: 'Gia đình' },
   { value: 'friends', label: 'Nhóm bạn' },
 ];
-
-const datePickerTheme = {
-  rainbow: {
-    palette: {
-      brand: '#F75940',
-    },
-  },
-};
 
 export function tomorrowIso(): string {
   const d = new Date();
@@ -76,6 +69,8 @@ interface InputScreenProps {
 
 export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
   const [form, setForm] = useState<SuggestRequest>(initialValue);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   function toggleStyle(value: string) {
     setForm((f) => ({
@@ -83,6 +78,19 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
       styles: f.styles.includes(value) ? f.styles.filter((s) => s !== value) : [...f.styles, value],
     }));
   }
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [pickerOpen]);
 
   return (
     <div className={styles.screen}>
@@ -126,17 +134,32 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
           </div>
 
           <div className={styles.field}>
-            <RainbowThemeContainer theme={datePickerTheme}>
-              <DatePicker
-                id="startDate"
-                label="Ngày đi"
-                value={parseIsoDate(form.startDate)}
-                minDate={parseIsoDate(tomorrowIso())}
-                onChange={(date: Date) => setForm((f) => ({ ...f, startDate: formatIsoDate(date) }))}
-                formatStyle="medium"
-                locale="vi"
-              />
-            </RainbowThemeContainer>
+            <span className={styles.fieldLabel}>Ngày đi</span>
+            <div className={styles.datePickerContainer} ref={pickerRef}>
+              <button
+                type="button"
+                className={styles.datePickerButton}
+                onClick={() => setPickerOpen(!pickerOpen)}
+              >
+                📅 {formatIsoDate(parseIsoDate(form.startDate))}
+              </button>
+              {pickerOpen && (
+                <div className={styles.datePickerPopover}>
+                  <DayPicker
+                    mode="single"
+                    selected={parseIsoDate(form.startDate)}
+                    onSelect={(date) => {
+                      if (date) {
+                        setForm((f) => ({ ...f, startDate: formatIsoDate(date) }));
+                        setPickerOpen(false);
+                      }
+                    }}
+                    disabled={{ before: parseIsoDate(tomorrowIso()) }}
+                    locale={vi}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className={styles.field}>
