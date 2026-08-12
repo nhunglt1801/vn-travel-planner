@@ -15,16 +15,31 @@ export function PlaceCard({ place, onClick }: PlaceCardProps) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchImage(place.imageQuery, place.tags[0] ?? '', place.name).then((result) => {
-      if (!cancelled) setImage(result);
-    });
+    fetchImage(place.imageQuery, place.tags[0] ?? '', place.name)
+      .then((result) => {
+        if (!cancelled) setImage(result);
+      })
+      .catch(() => {
+        if (!cancelled) setImage({ url: '/fallback-images/fallback-1.svg', alt: place.name, source: 'fallback' });
+      });
     return () => {
       cancelled = true;
     };
   }, [place.imageQuery, place.tags, place.name]);
 
   return (
-    <div className={styles.card} onClick={onClick} role="button" tabIndex={0}>
+    <div
+      className={styles.card}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <div className={styles.imageWrap}>
         {!image && <Skeleton />}
         {image && (
@@ -33,6 +48,7 @@ export function PlaceCard({ place, onClick }: PlaceCardProps) {
             alt={image.alt}
             className={`${styles.image} ${loaded ? styles.imageLoaded : ''}`}
             onLoad={() => setLoaded(true)}
+            onError={() => setImage((img) => (img ? { ...img, url: '/fallback-images/fallback-1.svg' } : img))}
           />
         )}
       </div>

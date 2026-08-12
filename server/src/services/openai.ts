@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { Place, SuggestRequest } from '../types/index.js';
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 const suggestSchema = {
@@ -9,8 +9,6 @@ const suggestSchema = {
   properties: {
     places: {
       type: 'array',
-      minItems: 6,
-      maxItems: 6,
       items: {
         type: 'object',
         properties: {

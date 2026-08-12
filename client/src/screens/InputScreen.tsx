@@ -106,110 +106,110 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
       <h2 className={styles.advancedLabel}>Tinh chỉnh thêm</h2>
 
       <div className={styles.advancedPanel}>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>Khu vực</span>
-            <input
-              type="text"
-              className={styles.textInput}
-              placeholder="Vd: Đà Lạt, miền Trung..."
-              value={form.region ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
-            />
-          </label>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>Khu vực</span>
+          <input
+            type="text"
+            className={styles.textInput}
+            placeholder="Vd: Đà Lạt, miền Trung..."
+            value={form.region ?? ''}
+            onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+          />
+        </label>
 
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Số ngày</span>
-            <div className={styles.chipRow}>
-              {DAY_OPTIONS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className={`${styles.chip} ${form.days === d ? styles.chipSelected : ''}`}
-                  onClick={() => setForm((f) => ({ ...f, days: d }))}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Ngày đi</span>
-            <div className={styles.datePickerContainer} ref={pickerRef}>
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Số ngày</span>
+          <div className={styles.chipRow}>
+            {DAY_OPTIONS.map((d) => (
               <button
+                key={d}
                 type="button"
-                className={styles.datePickerButton}
-                onClick={() => setPickerOpen(!pickerOpen)}
+                className={`${styles.chip} ${form.days === d ? styles.chipSelected : ''}`}
+                onClick={() => setForm((f) => ({ ...f, days: d }))}
               >
-                📅 {formatIsoDate(parseIsoDate(form.startDate))}
+                {d}
               </button>
-              {pickerOpen && (
-                <div className={styles.datePickerPopover}>
-                  <DayPicker
-                    mode="single"
-                    selected={parseIsoDate(form.startDate)}
-                    onSelect={(date) => {
-                      if (date) {
-                        setForm((f) => ({ ...f, startDate: formatIsoDate(date) }));
-                        setPickerOpen(false);
-                      }
-                    }}
-                    disabled={{ before: parseIsoDate(tomorrowIso()) }}
-                    locale={vi}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Ngân sách</span>
-            <div className={styles.chipRow}>
-              {BUDGET_OPTIONS.map((b) => (
-                <button
-                  key={b.value}
-                  type="button"
-                  className={`${styles.chip} ${form.budget === b.value ? styles.chipSelected : ''}`}
-                  onClick={() => setForm((f) => ({ ...f, budget: b.value }))}
-                >
-                  {b.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Phong cách</span>
-            <div className={styles.chipRow}>
-              {STYLE_OPTIONS.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  className={`${styles.chip} ${form.styles.includes(s.value) ? styles.chipSelected : ''}`}
-                  onClick={() => toggleStyle(s.value)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <span className={styles.fieldLabel}>Đi với ai</span>
-            <div className={styles.chipRow}>
-              {COMPANION_OPTIONS.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  className={`${styles.chip} ${form.companion === c.value ? styles.chipSelected : ''}`}
-                  onClick={() => setForm((f) => ({ ...f, companion: c.value }))}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
+
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Ngày đi</span>
+          <div className={styles.datePickerContainer} ref={pickerRef}>
+            <button
+              type="button"
+              className={styles.datePickerButton}
+              onClick={() => setPickerOpen(!pickerOpen)}
+            >
+              📅 {parseIsoDate(form.startDate).toLocaleDateString('vi-VN')}
+            </button>
+            {pickerOpen && (
+              <div className={styles.datePickerPopover}>
+                <DayPicker
+                  mode="single"
+                  selected={parseIsoDate(form.startDate)}
+                  onSelect={(date) => {
+                    if (date) {
+                      setForm((f) => ({ ...f, startDate: formatIsoDate(date) }));
+                      setPickerOpen(false);
+                    }
+                  }}
+                  disabled={{ before: parseIsoDate(tomorrowIso()) }}
+                  locale={vi}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Ngân sách</span>
+          <div className={styles.chipRow}>
+            {BUDGET_OPTIONS.map((b) => (
+              <button
+                key={b.value}
+                type="button"
+                className={`${styles.chip} ${form.budget === b.value ? styles.chipSelected : ''}`}
+                onClick={() => setForm((f) => ({ ...f, budget: b.value }))}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Phong cách</span>
+          <div className={styles.chipRow}>
+            {STYLE_OPTIONS.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                className={`${styles.chip} ${form.styles.includes(s.value) ? styles.chipSelected : ''}`}
+                onClick={() => toggleStyle(s.value)}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Đi với ai</span>
+          <div className={styles.chipRow}>
+            {COMPANION_OPTIONS.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                className={`${styles.chip} ${form.companion === c.value ? styles.chipSelected : ''}`}
+                onClick={() => setForm((f) => ({ ...f, companion: c.value }))}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <button type="button" className={styles.cta} onClick={() => onSubmit(form)}>
         Gợi ý cho tôi ✨
