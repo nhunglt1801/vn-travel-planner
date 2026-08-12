@@ -45,6 +45,8 @@
 - Tiêu thụ: `ItineraryRequest`, `ItineraryDay` từ `../types` (Plan 0, Task 2).
 - Kết quả: `getItinerary(req: ItineraryRequest): Promise<ItineraryDay[]>` — dùng ở `routes/itinerary.ts` (Task 2). Throw khi OpenAI lỗi, nội dung rỗng, hoặc số ngày trả về không khớp `req.days`.
 
+**Lưu ý quan trọng (rút từ lỗi Critical phát hiện ở review tổng thể Plan 1):** Schema `buildItinerarySchema` bên dưới **không** được có `minItems`/`maxItems` trên mảng `days` — hai keyword này không được OpenAI Structured Outputs hỗ trợ ở `strict: true`, sẽ khiến mọi request bị từ chối 400. Việc đảm bảo đúng số ngày vẫn được giữ qua system prompt + kiểm tra runtime `parsed.days.length !== req.days` đã có ở Bước 1 bên dưới.
+
 - [ ] **Bước 1: Thêm import và hàm `getItinerary` vào cuối `server/src/services/openai.ts`**
 
 Sửa dòng import đầu file để lấy thêm `ItineraryRequest`, `ItineraryDay`:
@@ -73,8 +75,6 @@ function buildItinerarySchema(days: number) {
     properties: {
       days: {
         type: 'array',
-        minItems: days,
-        maxItems: days,
         items: {
           type: 'object',
           properties: {

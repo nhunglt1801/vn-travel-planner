@@ -349,13 +349,15 @@ git commit -m "feat(server): add Wikipedia-first image fallback chain with tests
 - Tiêu thụ: `SuggestRequest`, `Place` từ `../types` (Plan 0, Task 2).
 - Kết quả: `getSuggestions(req: SuggestRequest): Promise<Place[]>` — dùng ở `routes/suggest.ts` (Task 5). Throw khi OpenAI lỗi, nội dung rỗng, hoặc số lượng phần tử không đúng 6 — route bắt lỗi và chuyển thành lỗi HTTP.
 
+**Cập nhật 2026-08-12 (phát hiện ở buổi review tổng thể Plan 1 — lỗi Critical):** Bản gốc của brief này có `minItems: 6` và `maxItems: 6` trong `suggestSchema.properties.places` — hai keyword này **không được OpenAI Structured Outputs hỗ trợ ở chế độ `strict: true`** (xác nhận qua tài liệu chính thức và cộng đồng OpenAI), khiến request luôn bị từ chối với lỗi 400 ngay từ đầu, tức `/api/suggest` sẽ **luôn thất bại** dù server/API key đều đúng. Đã xoá cả hai keyword khỏi schema bên dưới. Việc đảm bảo đúng 6 phần tử vẫn được giữ nguyên qua: (1) chỉ dẫn trong system prompt ("đúng 6 địa điểm"), và (2) kiểm tra runtime `parsed.places.length !== 6` đã có sẵn trong `getSuggestions`. Áp dụng bài học này cho Task 3 của Plan 3 (`getItinerary`) — schema đó cũng không được dùng `minItems`/`maxItems` cho mảng `days`.
+
 - [ ] **Bước 1: Viết `server/src/services/openai.ts`**
 
 ```ts
 import OpenAI from 'openai';
 import type { Place, SuggestRequest } from '../types';
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 const suggestSchema = {
@@ -363,8 +365,6 @@ const suggestSchema = {
   properties: {
     places: {
       type: 'array',
-      minItems: 6,
-      maxItems: 6,
       items: {
         type: 'object',
         properties: {
