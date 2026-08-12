@@ -935,6 +935,8 @@ git commit -m "feat(client): add InputScreen with prompt hero and collapsible re
 
 **Cập nhật 2026-08-12 (theo yêu cầu trực tiếp của người dùng):** Khi `error` có giá trị, `SuggestionsScreen` không còn hiện `ErrorBanner` như một banner nội tuyến trong luồng nữa — component `ErrorBanner` (Plan 0, Task 4) được đổi thành **modal cảnh báo lỗi giữa màn hình** (overlay mờ phía sau, khối modal căn giữa chứa nội dung lỗi + nút "Thử lại" căn giữa bên dưới, responsive theo breakpoint để không vỡ giao diện). Xem chi tiết thiết kế ở spec mục 6. Vì `ErrorBanner` là component dùng chung, thay đổi này áp dụng luôn cho `ItineraryScreen` ở Plan 3 (khi được xây), không cần sửa riêng lần nữa.
 
+**Cập nhật 2026-08-12 #2 (theo yêu cầu trực tiếp của người dùng, sau khi kiểm thử thủ công phát hiện modal không có lối thoát nếu API cứ lỗi):** `ErrorBanner` có thêm prop bắt buộc `onClose: () => void` và một nút **✕** ở góc trên bên phải modal — bấm vào gọi `onClose()`, đóng modal. `SuggestionsScreen` truyền `onClose={onBack}` (tái dùng đúng handler "← Chỉnh lại yêu cầu" đã có sẵn) để bấm ✕ vừa đóng modal vừa quay lại `InputScreen` luôn trong 1 thao tác — không cần thêm state mới ở `SuggestionsScreen` hay `App.tsx`.
+
 - [ ] **Bước 1: Viết `client/src/components/PlaceCard.module.css`**
 
 ```css
