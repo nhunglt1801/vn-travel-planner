@@ -16,7 +16,7 @@
 
 - Design tokens phải khớp `wanderlog.com-DESIGN.md` — accent coral `#F75940`, text charcoal `#212529`, font Source Sans 3, card bo góc `16px`, spacing base `8px`.
 - Breakpoints: mobile `<640px`, tablet `640–1024px`, desktop `≥1024px`.
-- Không dùng thư viện UI ngoài — chỉ CSS Modules + CSS variables. **Ngoại lệ (2026-08-12, theo yêu cầu trực tiếp của người dùng):** ô "Ngày đi" trong `InputScreen` (Task 7) dùng `DatePicker` từ `react-rainbow-components` + `styled-components@5.x` — xem chi tiết ở Task 7 bên dưới.
+- Không dùng thư viện UI ngoài — chỉ CSS Modules + CSS variables. **Ngoại lệ (2026-08-12, theo yêu cầu trực tiếp của người dùng; đổi thư viện ngày 2026-08-12 sau khi phát hiện lỗi runtime):** ô "Ngày đi" trong `InputScreen` (Task 7) dùng `DayPicker` từ `react-day-picker` — xem chi tiết ở Task 7 bên dưới.
 - Thứ tự lấy ảnh (yêu cầu cứng, không bao giờ để ô ảnh trống): **Wikipedia → Unsplash → ảnh mặc định đóng gói sẵn**.
 - `POST /api/suggest` phải trả đúng 6 địa điểm.
 - `OPENAI_MODEL` mặc định `gpt-4o-mini`, đổi được qua biến môi trường mà không cần sửa code.
@@ -581,13 +581,17 @@ git commit -m "feat(client): add fetchSuggestions and fetchImage wrappers"
 
 **Cập nhật 2026-08-12 (theo phản hồi của người dùng sau khi xem preview):** Bỏ hành vi thu gọn/mở rộng của khối "Tinh chỉnh thêm" — toàn bộ các trường chọn nhanh hiển thị **luôn luôn**, ngay dưới ô prompt, không cần bấm gì thêm. Không còn state `advancedOpen`, không còn nút toggle, không còn CSS class `.advancedToggle`. Nhãn "Tinh chỉnh thêm" giữ lại dưới dạng tiêu đề tĩnh (không phải nút) để nhóm các trường lại cho dễ quét mắt.
 
-**Cập nhật 2026-08-12 #2 (theo yêu cầu trực tiếp của người dùng):** Trường "Ngày đi" đổi từ `<input type="date">` mặc định của trình duyệt sang `DatePicker` của thư viện `react-rainbow-components` (cài qua `npm install react-rainbow-components --save`, kèm `styled-components@5.3.11` — ghim bản 5.x vì `react-rainbow-components@1.32.0` khai báo peer dependency `styled-components: '>=4.3.2 <6'`, không tương thích bản 6 mới nhất). Đây là **ngoại lệ duy nhất** cho ràng buộc "không dùng thư viện UI ngoài" của dự án, được người dùng xác nhận trực tiếp.
+**Cập nhật 2026-08-12 #2 (theo yêu cầu trực tiếp của người dùng):** Trường "Ngày đi" đổi từ `<input type="date">` mặc định của trình duyệt sang một ô bấm mở popover lịch chọn ngày, dùng component `DayPicker` của thư viện `react-day-picker`. Đây là **ngoại lệ duy nhất** cho ràng buộc "không dùng thư viện UI ngoài" của dự án, được người dùng xác nhận trực tiếp.
 
-Chi tiết kỹ thuật:
-- `DatePicker` nhận `value`/trả về qua `onChange` dưới dạng đối tượng `Date` của JavaScript, không phải chuỗi ISO — cần 2 hàm chuyển đổi cục bộ `parseIsoDate(iso: string): Date` và `formatIsoDate(date: Date): string`, dựng bằng `getFullYear`/`getMonth`/`getDate` (**không** dùng `toISOString()`, để tránh lỗi lệch ngày do quy đổi múi giờ UTC — cùng nguyên tắc đã áp dụng cho `tomorrowIso()`).
-- Màu khi chọn ngày = màu accent coral `#F75940` của hệ thống, áp qua `RainbowThemeContainer` (component của thư viện, bọc riêng quanh `DatePicker`, không bọc toàn bộ `InputScreen`) với `theme={{ rainbow: { palette: { brand: '#F75940' } } }}`.
-- Dùng `label="Ngày đi"` sẵn có của `DatePicker` (đảm bảo accessibility đúng chuẩn thư viện) thay vì `<span className={styles.fieldLabel}>` như các trường khác — nhãn sẽ theo typography mặc định của thư viện, không hoàn toàn giống các trường còn lại. Đây là đánh đổi hợp lý khi dùng 1 component ngoài cho đúng 1 trường; có thể tinh chỉnh thêm sau nếu cần.
-- `minDate` truyền vào là `parseIsoDate(tomorrowIso())` — giữ đúng ràng buộc cũ (không cho chọn ngày trong quá khứ).
+**Cập nhật 2026-08-12 #3 (đổi thư viện sau khi phát hiện lỗi runtime ở Task 9):** Bản đầu tiên dùng `react-rainbow-components`, nhưng khi nối vào `App.tsx` thật (Task 9) và render trong trình duyệt, app bị lỗi "Invalid hook call" — nguyên nhân: `react-rainbow-components@1.32.0` tự kéo theo một bản React 16.14.0 riêng (qua dependency thật `react-async-script-loader` yêu cầu React `^15.5.4`, không phải qua peerDependency), đụng độ với React 19 thật của app. Lỗi này không lộ ra ở bước `tsc --noEmit` (vì import đã bị `@ts-expect-error` che, biến thành kiểu `any`) cũng không lộ ra ở bản preview HTML tĩnh (vì đó là bản dựng lại thủ công bằng CSS/JS thuần, không phải component React thật) — chỉ lộ ra khi thực sự render trong React runtime, đúng vào lúc Task 9 nối `App.tsx`. Đã gỡ bỏ hoàn toàn `react-rainbow-components` và `styled-components`, thay bằng `react-day-picker` (`npm install react-day-picker --save`) — thư viện này không có dependency React nào khác ngoài peerDependency (`date-fns`/`@date-fns/tz` là các thư viện xử lý ngày thuần, không đụng tới React), nên không có rủi ro đụng độ tương tự; file khai báo `types` đúng chuẩn trong `exports` map nên không cần `@ts-expect-error`.
+
+Chi tiết kỹ thuật (bản dùng `react-day-picker`):
+- `DayPicker` (`mode="single"`) nhận `selected`/trả về qua `onSelect` dưới dạng đối tượng `Date` của JavaScript (hoặc `undefined`), không phải chuỗi ISO — cần 2 hàm chuyển đổi cục bộ `parseIsoDate(iso: string): Date` và `formatIsoDate(date: Date): string`, dựng bằng `getFullYear`/`getMonth`/`getDate` (**không** dùng `toISOString()`, để tránh lỗi lệch ngày do quy đổi múi giờ UTC — cùng nguyên tắc đã áp dụng cho `tomorrowIso()`).
+- `react-day-picker` chỉ là lưới lịch (calendar grid) thuần, không có sẵn ô input + popover — cần tự dựng một wrapper nhỏ: nút bấm hiển thị ngày đã chọn (kèu icon lịch), bấm vào mở/đóng một `<div>` popover chứa `<DayPicker>`, đóng lại khi chọn xong hoặc bấm ra ngoài.
+- Màu khi chọn ngày = màu accent coral `#F75940` của hệ thống, áp qua CSS variable `--rdp-accent-color` của thư viện (đặt trong CSS Module của `InputScreen`, không cần theme-provider/context nào của thư viện).
+- Ngày trước ngày mai bị khoá bằng `disabled={{ before: parseIsoDate(tomorrowIso()) }}`.
+- Cần import CSS mặc định của thư viện: `import 'react-day-picker/style.css';` ở đầu file `InputScreen.tsx`.
+- Locale tiếng Việt: import `{ vi }` từ `'react-day-picker/locale'` nếu export này tồn tại trong bản đã cài (xác nhận sau khi `npm install`); nếu không có, bỏ qua prop `locale` (mặc định `en-US`) thay vì đoán mò.
 
 - [ ] **Bước 1: Viết `client/src/screens/InputScreen.module.css`**
 
