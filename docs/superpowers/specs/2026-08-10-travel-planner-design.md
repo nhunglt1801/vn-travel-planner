@@ -17,7 +17,7 @@ Web app mobile-first, demo, cho phép người dùng mô tả mong muốn đi ch
 
 ## 2. Kiến trúc & Tech Stack
 
-- **Frontend:** React 19 + Vite + TypeScript, SPA. Styling bằng CSS thuần/CSS Modules dùng CSS variables ánh xạ trực tiếp từ token trong DESIGN.md (màu, spacing, radius, shadow, typography). Không dùng thư viện UI ngoài — design system đã đủ chi tiết.
+- **Frontend:** React 19 + Vite + TypeScript, SPA. Styling bằng CSS thuần/CSS Modules dùng CSS variables ánh xạ trực tiếp từ token trong DESIGN.md (màu, spacing, radius, shadow, typography). Không dùng thư viện UI ngoài — design system đã đủ chi tiết. **Ngoại lệ duy nhất (quyết định 2026-08-12):** ô chọn ngày đi ở `InputScreen` dùng `DatePicker` từ `react-rainbow-components` (thay cho `<input type="date">` mặc định của trình duyệt), theo yêu cầu trực tiếp của người dùng — màu khi chọn ngày dùng đúng màu accent coral `#F75940` của hệ thống qua theming của thư viện (`RainbowThemeContainer`, `palette.brand`). Kéo theo dependency `styled-components` (ghim bản `5.x`, vì `react-rainbow-components@1.32.0` yêu cầu `styled-components <6`).
 - **Backend:** Node.js + Express (TypeScript), là **proxy duy nhất** tới các dịch vụ ngoài để giữ API key an toàn (không lộ ra client):
   - **OpenAI API** — phân tích yêu cầu, gợi ý địa điểm, sinh lịch trình (Structured Outputs / JSON Schema).
   - **Wikipedia API** (không cần key) — nguồn ảnh **chính**, ảnh thật đúng địa danh theo tên địa điểm.
@@ -49,9 +49,8 @@ Không dùng router — 3 màn hình chính chuyển đổi bằng state cục b
 
 ### 3.1 `InputScreen` — layout Conversational-first
 - Ô prompt tự do là hero của màn hình.
-- Khối "⚙️ Tinh chỉnh thêm" (collapsible) chứa các lựa chọn chọn nhanh: khu vực (text, để trống được), số ngày (chip 1–7), ngày đi (date picker cho ngày bắt đầu), ngân sách (3 chip đơn chọn: tiết kiệm/vừa/cao cấp), phong cách (chip đa chọn: biển, núi, ẩm thực, lịch sử, nghỉ dưỡng, sôi động...), đi với ai (chip đơn chọn: một mình/cặp đôi/gia đình/nhóm bạn).
-- Tất cả trường chọn nhanh có **giá trị mặc định hợp lý** (số ngày=3, ngày đi=ngày mai, ngân sách=vừa, phong cách=[], đi cùng=một mình) để người dùng chỉ cần gõ prompt tự do là đủ để bấm gợi ý; mở rộng "Tinh chỉnh thêm" giúp kết quả sát hơn.
-- Trạng thái mặc định của khối "Tinh chỉnh thêm": **thu gọn** trên mobile (`<640px`, giữ prompt làm trọng tâm như đã chọn), **mở sẵn** trên tablet/desktop (`≥640px`, đủ không gian hiển thị nên không cần thao tác thêm).
+- Khối "Tinh chỉnh thêm" hiển thị **luôn luôn**, ngay dưới ô prompt tự do, không thu gọn/mở ra — người dùng không phải bấm thêm thao tác nào để thấy các lựa chọn nhanh: khu vực (text, để trống được), số ngày (chip 1–7), ngày đi (date picker cho ngày bắt đầu), ngân sách (3 chip đơn chọn: tiết kiệm/vừa/cao cấp), phong cách (chip đa chọn: biển, núi, ẩm thực, lịch sử, nghỉ dưỡng, sôi động...), đi với ai (chip đơn chọn: một mình/cặp đôi/gia đình/nhóm bạn).
+- Tất cả trường chọn nhanh có **giá trị mặc định hợp lý** (số ngày=3, ngày đi=ngày mai, ngân sách=vừa, phong cách=[], đi cùng=một mình) để người dùng chỉ cần gõ prompt tự do là đủ để bấm gợi ý; chỉnh các trường bên dưới giúp kết quả sát hơn.
 - Nút CTA "Gợi ý cho tôi ✨" (coral, cố định dưới) → chuyển `SuggestionsScreen`.
 
 ### 3.2 `SuggestionsScreen` — lưới 1 cột, card lớn

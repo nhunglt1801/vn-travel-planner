@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { SuggestRequest, Budget, Companion } from '../types';
+// @ts-expect-error - types are at index.d.ts but not properly exported in package.json
+import { DatePicker, RainbowThemeContainer } from 'react-rainbow-components';
 import styles from './InputScreen.module.css';
 
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
@@ -26,12 +28,32 @@ const COMPANION_OPTIONS: { value: Companion; label: string }[] = [
   { value: 'friends', label: 'Nhóm bạn' },
 ];
 
+const datePickerTheme = {
+  rainbow: {
+    palette: {
+      brand: '#F75940',
+    },
+  },
+};
+
 export function tomorrowIso(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseIsoDate(iso: string): Date {
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -103,16 +125,19 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
             </div>
           </div>
 
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>Ngày đi</span>
-            <input
-              type="date"
-              className={styles.textInput}
-              value={form.startDate}
-              min={tomorrowIso()}
-              onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-            />
-          </label>
+          <div className={styles.field}>
+            <RainbowThemeContainer theme={datePickerTheme}>
+              <DatePicker
+                id="startDate"
+                label="Ngày đi"
+                value={parseIsoDate(form.startDate)}
+                minDate={parseIsoDate(tomorrowIso())}
+                onChange={(date: Date) => setForm((f) => ({ ...f, startDate: formatIsoDate(date) }))}
+                formatStyle="medium"
+                locale="vi"
+              />
+            </RainbowThemeContainer>
+          </div>
 
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Ngân sách</span>

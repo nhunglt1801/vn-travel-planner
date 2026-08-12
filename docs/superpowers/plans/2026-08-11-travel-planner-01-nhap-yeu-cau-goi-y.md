@@ -16,7 +16,7 @@
 
 - Design tokens phải khớp `wanderlog.com-DESIGN.md` — accent coral `#F75940`, text charcoal `#212529`, font Source Sans 3, card bo góc `16px`, spacing base `8px`.
 - Breakpoints: mobile `<640px`, tablet `640–1024px`, desktop `≥1024px`.
-- Không dùng thư viện UI ngoài — chỉ CSS Modules + CSS variables.
+- Không dùng thư viện UI ngoài — chỉ CSS Modules + CSS variables. **Ngoại lệ (2026-08-12, theo yêu cầu trực tiếp của người dùng):** ô "Ngày đi" trong `InputScreen` (Task 7) dùng `DatePicker` từ `react-rainbow-components` + `styled-components@5.x` — xem chi tiết ở Task 7 bên dưới.
 - Thứ tự lấy ảnh (yêu cầu cứng, không bao giờ để ô ảnh trống): **Wikipedia → Unsplash → ảnh mặc định đóng gói sẵn**.
 - `POST /api/suggest` phải trả đúng 6 địa điểm.
 - `OPENAI_MODEL` mặc định `gpt-4o-mini`, đổi được qua biến môi trường mà không cần sửa code.
@@ -578,6 +578,16 @@ git commit -m "feat(client): add fetchSuggestions and fetchImage wrappers"
 **Giao diện phụ thuộc:**
 - Tiêu thụ: `SuggestRequest`, `Budget`, `Companion` từ `../types` (Plan 0, Task 3).
 - Kết quả: `createDefaultSuggestRequest(): SuggestRequest` (dùng ở `App.tsx` — Task 9 — để khởi tạo state), `tomorrowIso(): string`, và component `InputScreen({ initialValue: SuggestRequest, onSubmit: (request: SuggestRequest) => void })` — `onSubmit` được gọi với toàn bộ state form khi bấm CTA; `App.tsx` (Task 9) dùng nó để chuyển sang `SuggestionsScreen`.
+
+**Cập nhật 2026-08-12 (theo phản hồi của người dùng sau khi xem preview):** Bỏ hành vi thu gọn/mở rộng của khối "Tinh chỉnh thêm" — toàn bộ các trường chọn nhanh hiển thị **luôn luôn**, ngay dưới ô prompt, không cần bấm gì thêm. Không còn state `advancedOpen`, không còn nút toggle, không còn CSS class `.advancedToggle`. Nhãn "Tinh chỉnh thêm" giữ lại dưới dạng tiêu đề tĩnh (không phải nút) để nhóm các trường lại cho dễ quét mắt.
+
+**Cập nhật 2026-08-12 #2 (theo yêu cầu trực tiếp của người dùng):** Trường "Ngày đi" đổi từ `<input type="date">` mặc định của trình duyệt sang `DatePicker` của thư viện `react-rainbow-components` (cài qua `npm install react-rainbow-components --save`, kèm `styled-components@5.3.11` — ghim bản 5.x vì `react-rainbow-components@1.32.0` khai báo peer dependency `styled-components: '>=4.3.2 <6'`, không tương thích bản 6 mới nhất). Đây là **ngoại lệ duy nhất** cho ràng buộc "không dùng thư viện UI ngoài" của dự án, được người dùng xác nhận trực tiếp.
+
+Chi tiết kỹ thuật:
+- `DatePicker` nhận `value`/trả về qua `onChange` dưới dạng đối tượng `Date` của JavaScript, không phải chuỗi ISO — cần 2 hàm chuyển đổi cục bộ `parseIsoDate(iso: string): Date` và `formatIsoDate(date: Date): string`, dựng bằng `getFullYear`/`getMonth`/`getDate` (**không** dùng `toISOString()`, để tránh lỗi lệch ngày do quy đổi múi giờ UTC — cùng nguyên tắc đã áp dụng cho `tomorrowIso()`).
+- Màu khi chọn ngày = màu accent coral `#F75940` của hệ thống, áp qua `RainbowThemeContainer` (component của thư viện, bọc riêng quanh `DatePicker`, không bọc toàn bộ `InputScreen`) với `theme={{ rainbow: { palette: { brand: '#F75940' } } }}`.
+- Dùng `label="Ngày đi"` sẵn có của `DatePicker` (đảm bảo accessibility đúng chuẩn thư viện) thay vì `<span className={styles.fieldLabel}>` như các trường khác — nhãn sẽ theo typography mặc định của thư viện, không hoàn toàn giống các trường còn lại. Đây là đánh đổi hợp lý khi dùng 1 component ngoài cho đúng 1 trường; có thể tinh chỉnh thêm sau nếu cần.
+- `minDate` truyền vào là `parseIsoDate(tomorrowIso())` — giữ đúng ràng buộc cũ (không cho chọn ngày trong quá khứ).
 
 - [ ] **Bước 1: Viết `client/src/screens/InputScreen.module.css`**
 
