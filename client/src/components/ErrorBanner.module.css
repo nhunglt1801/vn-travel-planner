@@ -9,10 +9,11 @@
 }
 
 .modal {
+  position: relative;
   background: var(--color-white);
   border-radius: var(--radius-rounded);
   box-shadow: var(--shadow-floating);
-  padding: var(--space-lg);
+  padding: calc(var(--space-lg) + var(--space-sm)) var(--space-lg) var(--space-lg);
   max-width: 400px;
   width: 100%;
   display: flex;
@@ -42,4 +43,27 @@
 
 .retryButton:hover {
   background: var(--color-coral-hover);
+}
+
+.closeButton {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-circle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background: var(--color-gray-1);
+  color: var(--color-charcoal);
 }

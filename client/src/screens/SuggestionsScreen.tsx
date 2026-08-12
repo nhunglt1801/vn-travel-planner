@@ -29,7 +29,7 @@ export function SuggestionsScreen({
         </button>
       </div>
 
-      {error && <ErrorBanner message={error} onRetry={onRetry} />}
+      {error && <ErrorBanner message={error} onRetry={onRetry} onClose={onBack} />}
 
       {!error && (
         <div className={styles.grid}>
