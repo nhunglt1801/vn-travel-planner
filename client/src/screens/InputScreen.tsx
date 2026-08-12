@@ -54,9 +54,6 @@ interface InputScreenProps {
 
 export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
   const [form, setForm] = useState<SuggestRequest>(initialValue);
-  const [advancedOpen, setAdvancedOpen] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches,
-  );
 
   function toggleStyle(value: string) {
     setForm((f) => ({
@@ -76,17 +73,9 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
         rows={4}
       />
 
-      <button
-        type="button"
-        className={styles.advancedToggle}
-        onClick={() => setAdvancedOpen((v) => !v)}
-        aria-expanded={advancedOpen}
-      >
-        ⚙️ Tinh chỉnh thêm {advancedOpen ? '▲' : '▼'}
-      </button>
+      <h2 className={styles.advancedLabel}>Tinh chỉnh thêm</h2>
 
-      {advancedOpen && (
-        <div className={styles.advancedPanel}>
+      <div className={styles.advancedPanel}>
           <label className={styles.field}>
             <span className={styles.fieldLabel}>Khu vực</span>
             <input
@@ -173,7 +162,6 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
             </div>
           </div>
         </div>
-      )}
 
       <button type="button" className={styles.cta} onClick={() => onSubmit(form)}>
         Gợi ý cho tôi ✨

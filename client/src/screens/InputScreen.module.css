@@ -30,15 +30,11 @@
   box-shadow: var(--focus-shadow);
 }
 
-.advancedToggle {
-  align-self: flex-start;
-  background: transparent;
-  border: none;
+.advancedLabel {
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-h4);
   color: var(--color-charcoal);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: var(--space-sm) 0;
+  margin: 0;
 }
 
 .advancedPanel {
