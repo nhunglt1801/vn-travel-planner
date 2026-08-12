@@ -37,13 +37,13 @@
 }
 
 .name {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-h4);
   margin: 0;
 }
 
 .reason {
-  font-size: 14px;
+  font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
   margin: 0;
 }

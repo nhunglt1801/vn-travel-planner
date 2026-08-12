@@ -15,7 +15,7 @@
   background: transparent;
   border: none;
   color: var(--color-charcoal);
-  font-size: 16px;
+  font-size: var(--font-size-button);
   cursor: pointer;
 }
 
