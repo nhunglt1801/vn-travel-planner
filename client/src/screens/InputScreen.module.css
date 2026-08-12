@@ -1,0 +1,121 @@
+.screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-md) calc(var(--space-3xl) + var(--space-md));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.title {
+  font-size: 36px;
+  font-weight: 700;
+  margin: var(--space-lg) 0 0;
+}
+
+.promptInput {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-subtle);
+  font-family: var(--font-family);
+  font-size: 18px;
+  resize: vertical;
+}
+
+.promptInput:focus {
+  outline: none;
+  border: 2px solid var(--color-deep-blue);
+  box-shadow: 0 0 0 3px rgba(63, 82, 227, 0.1);
+}
+
+.advancedToggle {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--color-charcoal);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: var(--space-sm) 0;
+}
+
+.advancedPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--color-gray-1);
+  border-radius: var(--radius-rounded);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fieldLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.textInput {
+  height: 56px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-subtle);
+  font-family: var(--font-family);
+  font-size: 16px;
+  background: var(--color-white);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.chip {
+  height: 44px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  color: var(--color-charcoal);
+  font-family: var(--font-family);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chipSelected {
+  background: var(--color-coral);
+  border-color: var(--color-coral);
+  color: var(--color-white);
+}
+
+.cta {
+  position: sticky;
+  bottom: var(--space-md);
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--color-coral);
+  color: var(--color-white);
+  border: 1px solid var(--color-coral);
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cta:hover {
+  background: var(--color-coral-hover);
+}
+
+@media (min-width: 640px) {
+  .screen {
+    padding-top: var(--space-2xl);
+  }
+}
