@@ -7,11 +7,13 @@ interface ErrorBannerProps {
 
 export function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   return (
-    <div className={styles.banner} role="alert">
-      <span>{message}</span>
-      <button type="button" className={styles.retryButton} onClick={onRetry}>
-        Thử lại
-      </button>
+    <div className={styles.backdrop}>
+      <div className={styles.modal} role="alertdialog">
+        <p className={styles.message}>{message}</p>
+        <button type="button" className={styles.retryButton} onClick={onRetry}>
+          Thử lại
+        </button>
+      </div>
     </div>
   );
 }
