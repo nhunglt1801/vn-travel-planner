@@ -51,7 +51,9 @@
 - Create: `server/src/services/wikipedia.ts`
 
 **Giao diện phụ thuộc:**
-- Kết quả: `getWikipediaImage(query: string): Promise<{ url: string; alt: string } | null>` — dùng ở `services/imageFallback.ts` (Task 3) làm nguồn ảnh chính. Trả `null` khi thất bại (không tìm thấy trang, không có ảnh, lỗi mạng) thay vì throw — nơi gọi tự quyết định fallback.
+- Kết quả: `getWikipediaImage(query: string): Promise<{ url: string; alt: string } | null>` — dùng ở `services/imageFallback.ts` (Task 3) làm nguồn ảnh chính. Trả `null` khi thất bại (không tìm thấy trang liên quan, không có bản tiếng Việt tương ứng, không có ảnh, lỗi mạng) thay vì throw — nơi gọi tự quyết định fallback.
+
+**Cập nhật 2026-08-12 (sửa lỗi ảnh sai chủ đề, phát hiện khi kiểm thử với API key thật):** Bản gốc bên dưới (tìm full-text trực tiếp trên `vi.wikipedia.org` bằng `imageQuery`) đã bị thay thế hoàn toàn — `imageQuery` do AI sinh ra là slug tiếng Anh (vd `"an-bang-beach"`), search full-text trực tiếp trên Wikipedia tiếng Việt bằng chuỗi này rất dễ khớp nhầm sang trang không liên quan (đã xác nhận thực tế: ra ảnh cờ Myanmar cho query `"an-bang-beach"`, lặp lại ổn định nhiều lần, không phải ngẫu nhiên). Xem chi tiết nguyên nhân và quy trình mới ở spec mục 4.2. Toàn bộ các bước gọi API dưới đây đã được kiểm chứng thủ công bằng `curl` thật trước khi đưa vào code — không phải suy đoán.
 
 - [ ] **Bước 1: Viết `server/src/services/wikipedia.ts`**
 
@@ -61,17 +63,75 @@ interface WikiImageResult {
   alt: string;
 }
 
+const GENERIC_WORDS = new Set([
+  'beach', 'beaches', 'island', 'islands', 'bay', 'national', 'park',
+  'city', 'town', 'province', 'district', 'the', 'of', 'in', 'at', 'a', 'an', 'and',
+]);
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function stripGenericWords(query: string): string {
+  return tokenize(query)
+    .filter((token) => !GENERIC_WORDS.has(token))
+    .join(' ');
+}
+
+function isRelevantMatch(cleanedQuery: string, title: string): boolean {
+  const queryTokens = tokenize(cleanedQuery);
+  if (queryTokens.length === 0) return false;
+  const titleTokens = new Set(tokenize(title));
+  return queryTokens.every((token) => titleTokens.has(token));
+}
+
+async function findEnglishTitle(cleanedQuery: string): Promise<string | null> {
+  const url = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(cleanedQuery)}&format=json&limit=3`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = (await res.json()) as any;
+  const titles: string[] = data?.[1] ?? [];
+  for (const title of titles) {
+    if (isRelevantMatch(cleanedQuery, title)) return title;
+  }
+  return null;
+}
+
+async function getVietnameseTitle(englishTitle: string): Promise<string | null> {
+  const propsUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(englishTitle)}&prop=pageprops&redirects=1&format=json`;
+  const propsRes = await fetch(propsUrl);
+  if (!propsRes.ok) return null;
+  const propsData = (await propsRes.json()) as any;
+  const pages = propsData?.query?.pages;
+  if (!pages) return null;
+  const page = Object.values(pages)[0] as any;
+  const qid = page?.pageprops?.wikibase_item;
+  if (!qid) return null;
+
+  const sitelinksUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qid}&props=sitelinks&sitefilter=viwiki&format=json`;
+  const sitelinksRes = await fetch(sitelinksUrl);
+  if (!sitelinksRes.ok) return null;
+  const sitelinksData = (await sitelinksRes.json()) as any;
+  const viTitle = sitelinksData?.entities?.[qid]?.sitelinks?.viwiki?.title;
+  return viTitle ?? null;
+}
+
 export async function getWikipediaImage(query: string): Promise<WikiImageResult | null> {
   if (!query) return null;
   try {
-    const searchUrl = `https://vi.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=1&origin=*`;
-    const searchRes = await fetch(searchUrl);
-    if (!searchRes.ok) return null;
-    const searchData = (await searchRes.json()) as any;
-    const title = searchData?.query?.search?.[0]?.title;
-    if (!title) return null;
+    const cleanedQuery = stripGenericWords(query);
+    if (!cleanedQuery) return null;
 
-    const summaryUrl = `https://vi.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const englishTitle = await findEnglishTitle(cleanedQuery);
+    if (!englishTitle) return null;
+
+    const vietnameseTitle = await getVietnameseTitle(englishTitle);
+    if (!vietnameseTitle) return null;
+
+    const summaryUrl = `https://vi.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(vietnameseTitle)}`;
     const summaryRes = await fetch(summaryUrl);
     if (!summaryRes.ok) return null;
     const summary = (await summaryRes.json()) as any;
@@ -85,16 +145,60 @@ export async function getWikipediaImage(query: string): Promise<WikiImageResult 
 }
 ```
 
-- [ ] **Bước 2: Xác nhận biên dịch được**
+Giải thích từng bước (đã kiểm chứng bằng `curl` thật):
+1. `stripGenericWords` loại các từ chung chung (beach, island...) khỏi query — vd `"an-bang-beach"` → `"an bang"`.
+2. `findEnglishTitle` gọi `action=opensearch` trên `en.wikipedia.org` (chính xác hơn `action=query&list=search` cho việc tìm đúng tên trang theo tên riêng — đã kiểm chứng: full-text search cho `"con-dao-beach"` ra toàn kết quả sai, trong khi opensearch cho `"con dao"` ra đúng `"Con Dao"` ngay kết quả đầu).
+3. `isRelevantMatch` chặn các kết quả không liên quan (vd `"Bang Saen Beach"` ở Thái Lan không chứa từ `"an"` nên bị loại) — duyệt qua 3 kết quả top, chọn kết quả đầu tiên qua được kiểm tra.
+4. `getVietnameseTitle` lấy Wikidata QID của trang tiếng Anh (`prop=pageprops`, bắt buộc `redirects=1` vì nhiều trang là redirect, vd `"Con Dao"` → redirect sang `"Côn Đảo"`), rồi lấy tên bài viết tiếng Việt tương ứng qua `action=wbgetentities&props=sitelinks&sitefilter=viwiki` trên `www.wikidata.org`. **Không dùng `prop=langlinks`** (API cũ — đã kiểm chứng thực tế: phần lớn trang hiện đại không còn populate field này, Wikipedia đã chuyển hẳn sang Wikidata cho liên kết ngôn ngữ).
+5. Ảnh + alt text cuối cùng luôn lấy từ đúng trang **Wikipedia tiếng Việt** qua REST API `page/summary` như bản gốc.
+
+- [ ] **Bước 2: Viết unit test cho các hàm lọc thuần (không cần gọi mạng)**
+
+`server/src/services/wikipedia.test.ts` — export thêm `stripGenericWords`, `isRelevantMatch`, `tokenize` từ `wikipedia.ts` (thêm `export` vào 3 hàm này) để test được:
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { stripGenericWords, isRelevantMatch } from './wikipedia';
+
+describe('stripGenericWords', () => {
+  it('loại các từ chung chung khỏi slug', () => {
+    expect(stripGenericWords('an-bang-beach')).toBe('an bang');
+    expect(stripGenericWords('con-dao-beach')).toBe('con dao');
+  });
+
+  it('trả về chuỗi rỗng nếu toàn từ chung chung', () => {
+    expect(stripGenericWords('the-beach')).toBe('');
+  });
+});
+
+describe('isRelevantMatch', () => {
+  it('chấp nhận khi mọi từ khoá đều khớp', () => {
+    expect(isRelevantMatch('con dao', 'Con Dao')).toBe(true);
+  });
+
+  it('từ chối khi thiếu từ khoá', () => {
+    expect(isRelevantMatch('an bang', 'Bang Saen Beach')).toBe(false);
+  });
+
+  it('từ chối khi query rỗng', () => {
+    expect(isRelevantMatch('', 'Con Dao')).toBe(false);
+  });
+});
+```
+
+Chạy: `npm run test -w server`
+Kỳ vọng: các test trên pass (cùng chạy với 3 test cũ của `imageFallback.test.ts` — tổng số test tăng lên).
+
+- [ ] **Bước 3: Xác nhận biên dịch được**
 
 Chạy: `npx tsc --noEmit -p server/tsconfig.json`
 Kỳ vọng: không lỗi.
 
-- [ ] **Bước 3: Commit**
+- [ ] **Bước 4: Commit**
 
 ```bash
-git add server/src/services/wikipedia.ts
-git commit -m "feat(server): add Wikipedia image service"
+git add server/src/services/wikipedia.ts server/src/services/wikipedia.test.ts
+git commit -m "fix(server): search Wikipedia via English opensearch + relevance check + Wikidata sitelinks to Vietnamese, avoiding topic-mismatched images"
 ```
 
 ---
