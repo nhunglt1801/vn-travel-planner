@@ -12,7 +12,7 @@ function toAsciiSlug(text: string): string {
   return text
     .replace(/đ/gi, 'd')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 export function tokenize(text: string): string[] {

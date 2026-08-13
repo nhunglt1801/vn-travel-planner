@@ -15,7 +15,7 @@ const suggestSchema = {
           id: { type: 'string' },
           name: { type: 'string' },
           region: { type: 'string' },
-          country: { type: 'string' },
+          country: { type: 'string', enum: ['Việt Nam'] },
           reason: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
           imageQuery: {

@@ -31,9 +31,12 @@ export function ProvinceCombobox({ value, onChange }: ProvinceComboboxProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, value]);
 
-  const filtered = VIETNAM_PROVINCES.filter((province) =>
-    stripDiacritics(province).includes(stripDiacritics(query)),
-  );
+  const isBrowsing = query === value;
+  const filtered = isBrowsing
+    ? VIETNAM_PROVINCES
+    : VIETNAM_PROVINCES.filter((province) =>
+        stripDiacritics(province).includes(stripDiacritics(query)),
+      );
 
   function selectProvince(province: string) {
     onChange(province);
@@ -48,7 +51,10 @@ export function ProvinceCombobox({ value, onChange }: ProvinceComboboxProps) {
         className={styles.input}
         placeholder="Vd: Hà Nội, Đà Nẵng..."
         value={query}
-        onFocus={() => setOpen(true)}
+        onFocus={(e) => {
+          setOpen(true);
+          e.target.select();
+        }}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);

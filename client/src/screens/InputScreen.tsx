@@ -135,7 +135,7 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
               <button
                 key={dest.province}
                 type="button"
-                className={styles.chip}
+                className={`${styles.chip} ${form.region === dest.province ? styles.chipSelected : ''}`}
                 onClick={() => setForm((f) => ({ ...f, region: dest.province }))}
               >
                 {dest.icon} {dest.label}
