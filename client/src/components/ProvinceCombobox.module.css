@@ -1,0 +1,62 @@
+.container {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  height: 56px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-subtle);
+  font-family: var(--font-family);
+  font-size: 16px;
+  background: var(--color-white);
+  color: var(--color-charcoal);
+}
+
+.input:focus {
+  outline: none;
+  border: var(--focus-border);
+  box-shadow: var(--focus-shadow);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-top: var(--space-sm);
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-rounded);
+  box-shadow: var(--shadow-floating);
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option {
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-subtle);
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-charcoal);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--color-gray-1);
+}
+
+.empty {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
