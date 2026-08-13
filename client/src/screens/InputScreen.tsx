@@ -3,6 +3,8 @@ import type { SuggestRequest, Budget, Companion } from '../types';
 import { DayPicker } from 'react-day-picker';
 import { vi } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
+import { HOT_DESTINATIONS } from '../data/provinces';
+import { ProvinceCombobox } from '../components/ProvinceCombobox';
 import styles from './InputScreen.module.css';
 
 const DAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
@@ -27,6 +29,12 @@ const COMPANION_OPTIONS: { value: Companion; label: string }[] = [
   { value: 'couple', label: 'Cặp đôi' },
   { value: 'family', label: 'Gia đình' },
   { value: 'friends', label: 'Nhóm bạn' },
+];
+
+const STARTER_PROMPTS = [
+  'Đi biển 3 ngày, ăn uống ngon, không quá đông đúc',
+  'Nghỉ dưỡng cuối tuần gần Hà Nội, có view núi',
+  'Khám phá ẩm thực miền Trung cùng gia đình',
 ];
 
 export function tomorrowIso(): string {
@@ -94,7 +102,7 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
 
   return (
     <div className={styles.screen}>
-      <h1 className={styles.title}>Bạn muốn đi đâu?</h1>
+      <h1 className={styles.title}>Bạn muốn đi đâu? ✈️</h1>
       <textarea
         className={styles.promptInput}
         placeholder="Mô tả chuyến đi mơ ước của bạn... (vd: Tôi muốn đi biển 3 ngày, ăn uống ngon, không quá đông đúc)"
@@ -103,17 +111,48 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
         rows={4}
       />
 
+      <div className={styles.suggestions}>
+        <div className={styles.suggestionGroup}>
+          <span className={styles.suggestionLabel}>Thử nhanh</span>
+          <div className={styles.starterList}>
+            {STARTER_PROMPTS.map((text) => (
+              <button
+                key={text}
+                type="button"
+                className={styles.starterChip}
+                onClick={() => setForm((f) => ({ ...f, prompt: text }))}
+              >
+                "{text}"
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.suggestionGroup}>
+          <span className={styles.suggestionLabel}>Đang hot</span>
+          <div className={styles.chipRow}>
+            {HOT_DESTINATIONS.map((dest) => (
+              <button
+                key={dest.province}
+                type="button"
+                className={styles.chip}
+                onClick={() => setForm((f) => ({ ...f, region: dest.province }))}
+              >
+                {dest.icon} {dest.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <h2 className={styles.advancedLabel}>Tinh chỉnh thêm</h2>
 
       <div className={styles.advancedPanel}>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Khu vực</span>
-          <input
-            type="text"
-            className={styles.textInput}
-            placeholder="Vd: Đà Lạt, miền Trung..."
+          <ProvinceCombobox
             value={form.region ?? ''}
-            onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+            onChange={(region) => setForm((f) => ({ ...f, region }))}
           />
         </label>
 
