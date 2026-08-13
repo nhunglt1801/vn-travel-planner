@@ -8,8 +8,15 @@ const GENERIC_WORDS = new Set([
   'city', 'town', 'province', 'district', 'the', 'of', 'in', 'at', 'and',
 ]);
 
-export function tokenize(text: string): string[] {
+function toAsciiSlug(text: string): string {
   return text
+    .replace(/đ/gi, 'd')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+}
+
+export function tokenize(text: string): string[] {
+  return toAsciiSlug(text)
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter(Boolean);

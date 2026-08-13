@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { stripGenericWords, isRelevantMatch } from './wikipedia.js';
+import { stripGenericWords, isRelevantMatch, tokenize } from './wikipedia.js';
+
+describe('tokenize', () => {
+  it('bỏ dấu tiếng Việt thay vì coi dấu là ký tự phân tách', () => {
+    expect(tokenize('Huế')).toEqual(['hue']);
+    expect(tokenize('Đà Lạt')).toEqual(['da', 'lat']);
+    expect(tokenize('vịnh Hạ Long')).toEqual(['vinh', 'ha', 'long']);
+  });
+
+  it('vẫn tách đúng slug tiếng Anh gạch ngang như trước', () => {
+    expect(tokenize('phu-quoc-beach')).toEqual(['phu', 'quoc', 'beach']);
+  });
+});
 
 describe('stripGenericWords', () => {
   it('loại các từ chung chung khỏi slug', () => {
