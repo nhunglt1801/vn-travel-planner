@@ -40,7 +40,7 @@ export async function getSuggestions(req: SuggestRequest): Promise<Place[]> {
       {
         role: 'system',
         content:
-          'Bạn là chuyên gia tư vấn du lịch. Dựa trên mong muốn của người dùng, gợi ý đúng 6 địa điểm du lịch phù hợp, đa dạng, kèm lý do ngắn gọn vì sao hợp với họ. Trường imageQuery của mỗi địa điểm BẮT BUỘC là tên địa danh viết bằng tiếng Anh, dạng slug chữ thường nối bằng dấu gạch ngang, không dấu tiếng Việt, không viết dính liền (vd: "da-lat", "ha-long-bay", "phu-quoc") — dùng để tra cứu ảnh trên Wikipedia, tuyệt đối không được để nguyên tiếng Việt hay viết dính liền kiểu PascalCase.',
+          'Bạn là chuyên gia tư vấn du lịch. Dựa trên mong muốn của người dùng, gợi ý đúng 6 địa điểm du lịch phù hợp, đa dạng, kèm lý do ngắn gọn vì sao hợp với họ. Toàn bộ 6 địa điểm BẮT BUỘC nằm trong lãnh thổ Việt Nam — tuyệt đối không gợi ý địa điểm ở nước khác, kể cả khi yêu cầu của người dùng gợi liên tưởng đến phong cách du lịch nước ngoài (vd "biển đẹp như Bali", "giống Santorini"); trong trường hợp đó vẫn chọn địa điểm trong nước có đặc điểm tương tự. Trường country của mọi địa điểm luôn là "Việt Nam". Trường imageQuery của mỗi địa điểm BẮT BUỘC là tên địa danh viết bằng tiếng Anh, dạng slug chữ thường nối bằng dấu gạch ngang, không dấu tiếng Việt, không viết dính liền (vd: "da-lat", "ha-long-bay", "phu-quoc") — dùng để tra cứu ảnh trên Wikipedia, tuyệt đối không được để nguyên tiếng Việt hay viết dính liền kiểu PascalCase.',
       },
       { role: 'user', content: JSON.stringify(req) },
     ],
