@@ -4,17 +4,26 @@ interface GeocodeResult {
   resolvedName: string;
 }
 
+async function geocodeQuery(query: string): Promise<GeocodeResult | null> {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=vi`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = (await res.json()) as any;
+  const result = data?.results?.[0];
+  if (!result) return null;
+  return { lat: result.latitude, lon: result.longitude, resolvedName: result.name };
+}
+
 export async function geocode(place: string, region?: string): Promise<GeocodeResult | null> {
   const query = [place, region].filter(Boolean).join(', ');
   if (!query) return null;
   try {
-    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=vi`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const data = (await res.json()) as any;
-    const result = data?.results?.[0];
-    if (!result) return null;
-    return { lat: result.latitude, lon: result.longitude, resolvedName: result.name };
+    const result = await geocodeQuery(query);
+    if (result) return result;
+    // Fallback: region name may be stale (e.g. post-merger province rename)
+    // that doesn't match Open-Meteo's geocoding DB — retry with place alone.
+    if (region) return await geocodeQuery(place);
+    return null;
   } catch {
     return null;
   }
