@@ -1,14 +1,32 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { SuggestRequest, Place } from './types';
 import { InputScreen, createDefaultSuggestRequest } from './screens/InputScreen';
 import { SuggestionsScreen } from './screens/SuggestionsScreen';
+import { DetailSheet } from './components/DetailSheet';
 import { fetchSuggestions } from './api/suggest';
 
 type Screen = 'input' | 'suggestions';
 
+function computeTripDates(startDate: string, days: number): string[] {
+  const [year, month, day] = startDate.split('-').map(Number);
+  const dates: string[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(year, month - 1, day + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${dd}`);
+  }
+  return dates;
+}
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('input');
   const [request, setRequest] = useState<SuggestRequest>(createDefaultSuggestRequest());
+  const tripDates = useMemo(
+    () => computeTripDates(request.startDate, request.days),
+    [request.startDate, request.days],
+  );
 
   const [suggestions, setSuggestions] = useState<Place[] | null>(null);
   const [suggestLoading, setSuggestLoading] = useState(false);
@@ -52,9 +70,13 @@ export default function App() {
       )}
 
       {selectedPlace && (
-        <p style={{ position: 'fixed', bottom: 16, left: 16, right: 16, textAlign: 'center' }}>
-          Đã chọn: {selectedPlace.name} — modal chi tiết sẽ được thêm ở Plan 2.
-        </p>
+        <DetailSheet
+          place={selectedPlace}
+          region={request.region || selectedPlace.region}
+          dates={tripDates}
+          onClose={() => setSelectedPlace(null)}
+          onCreateItinerary={() => setSelectedPlace(null)}
+        />
       )}
     </>
   );
