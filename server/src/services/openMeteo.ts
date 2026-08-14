@@ -5,7 +5,7 @@ interface GeocodeResult {
 }
 
 async function geocodeQuery(query: string): Promise<GeocodeResult | null> {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=vi`;
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=vi&countryCode=VN`;
   const res = await fetch(url);
   if (!res.ok) return null;
   const data = (await res.json()) as any;

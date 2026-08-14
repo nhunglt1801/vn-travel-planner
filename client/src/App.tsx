@@ -72,7 +72,7 @@ export default function App() {
       {selectedPlace && (
         <DetailSheet
           place={selectedPlace}
-          region={request.region || selectedPlace.region}
+          region={selectedPlace.region || request.region || ''}
           dates={tripDates}
           onClose={() => setSelectedPlace(null)}
           onCreateItinerary={() => setSelectedPlace(null)}

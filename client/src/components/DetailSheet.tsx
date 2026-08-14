@@ -20,19 +20,34 @@ export function DetailSheet({ place, region, dates, onClose, onCreateItinerary }
   const [weatherDays, setWeatherDays] = useState<WeatherDay[] | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherError, setWeatherError] = useState(false);
+  const [weatherLocation, setWeatherLocation] = useState<string | null>(null);
 
   const [dragY, setDragY] = useState(0);
   const startYRef = useRef<number | null>(null);
 
   useEffect(() => {
-    fetchImage(place.imageQuery, place.tags[0] ?? '', place.name).then(setImage);
+    let cancelled = false;
+    fetchImage(place.imageQuery, place.tags[0] ?? '', place.name)
+      .then((result) => {
+        if (!cancelled) setImage(result);
+      })
+      .catch(() => {
+        if (!cancelled) setImage({ url: '/fallback-images/fallback-1.svg', alt: place.name, source: 'fallback' });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [place.imageQuery, place.tags, place.name]);
 
   useEffect(() => {
     setWeatherLoading(true);
     setWeatherError(false);
+    setWeatherLocation(null);
     fetchWeather(place.name, region, dates)
-      .then((res) => setWeatherDays(res.days))
+      .then((res) => {
+        setWeatherDays(res.days);
+        setWeatherLocation(res.location.resolvedName);
+      })
       .catch(() => setWeatherError(true))
       .finally(() => setWeatherLoading(false));
   }, [place.name, region, dates]);
@@ -73,6 +88,7 @@ export function DetailSheet({ place, region, dates, onClose, onCreateItinerary }
               alt={image.alt}
               className={`${styles.image} ${imageLoaded ? styles.imageLoaded : ''}`}
               onLoad={() => setImageLoaded(true)}
+              onError={() => setImage((img) => (img ? { ...img, url: '/fallback-images/fallback-1.svg' } : img))}
             />
           )}
         </div>
@@ -89,7 +105,7 @@ export function DetailSheet({ place, region, dates, onClose, onCreateItinerary }
           ))}
         </div>
 
-        <h3 className={styles.sectionTitle}>Thời tiết</h3>
+        <h3 className={styles.sectionTitle}>Thời tiết{weatherLocation ? ` tại ${weatherLocation}` : ''}</h3>
         <WeatherRow days={weatherDays} loading={weatherLoading} error={weatherError} />
 
         <button type="button" className={styles.cta} onClick={onCreateItinerary}>
