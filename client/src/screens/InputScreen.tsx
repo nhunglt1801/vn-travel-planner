@@ -145,7 +145,7 @@ export function InputScreen({ initialValue, onSubmit }: InputScreenProps) {
         </div>
       </div>
 
-      <h2 className={styles.advancedLabel}>Tinh chỉnh thêm</h2>
+      {/* <h2 className={styles.advancedLabel}>Tinh chỉnh thêm</h2> */}
 
       <div className={styles.advancedPanel}>
         <label className={styles.field}>
