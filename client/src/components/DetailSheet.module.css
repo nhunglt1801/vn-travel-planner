@@ -1,0 +1,119 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+
+.sheet {
+  background: var(--color-white);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 16px 16px 0 0;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-floating);
+}
+
+.handle {
+  width: 40px;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-circle);
+  margin: 0 auto var(--space-sm);
+}
+
+.imageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-subtle);
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.imageLoaded {
+  opacity: 1;
+}
+
+.name {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.summary {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.tag {
+  background: var(--color-gray-1);
+  color: var(--color-charcoal);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-circle);
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin: var(--space-sm) 0 0;
+}
+
+.cta {
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--color-coral);
+  color: var(--color-white);
+  border: 1px solid var(--color-coral);
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: var(--space-sm);
+}
+
+.cta:disabled {
+  background: var(--color-gray-2);
+  border-color: var(--color-gray-2);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+@media (min-width: 640px) {
+  .backdrop {
+    align-items: center;
+  }
+
+  .sheet {
+    max-width: 480px;
+    border-radius: 16px;
+    max-height: 80vh;
+  }
+
+  .handle {
+    display: none;
+  }
+}
