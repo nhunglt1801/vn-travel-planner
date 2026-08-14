@@ -13,11 +13,22 @@ const suggestSchema = {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          name: { type: 'string' },
+          name: {
+            type: 'string',
+            description:
+              "Tên địa danh viết bằng tiếng Việt có dấu đầy đủ, đúng chính tả. Ví dụ đúng: 'Đà Lạt', 'Vịnh Hạ Long', 'Phú Quốc'. Ví dụ sai (không được dùng): 'Da Lat', 'Ha Long Bay'.",
+          },
           region: { type: 'string' },
           country: { type: 'string', enum: ['Việt Nam'] },
           reason: { type: 'string' },
-          tags: { type: 'array', items: { type: 'string' } },
+          tags: {
+            type: 'array',
+            items: {
+              type: 'string',
+              description:
+                "Từ khoá ngắn mô tả đặc điểm địa điểm, viết bằng tiếng Việt có dấu đầy đủ (vd: 'biển', 'núi', 'lãng mạn', 'gia đình'). Không dùng tiếng Anh.",
+            },
+          },
           imageQuery: {
             type: 'string',
             description:
@@ -40,7 +51,7 @@ export async function getSuggestions(req: SuggestRequest): Promise<Place[]> {
       {
         role: 'system',
         content:
-          'Bạn là chuyên gia tư vấn du lịch. Dựa trên mong muốn của người dùng, gợi ý đúng 6 địa điểm du lịch phù hợp, đa dạng, kèm lý do ngắn gọn vì sao hợp với họ. Toàn bộ 6 địa điểm BẮT BUỘC nằm trong lãnh thổ Việt Nam — tuyệt đối không gợi ý địa điểm ở nước khác, kể cả khi yêu cầu của người dùng gợi liên tưởng đến phong cách du lịch nước ngoài (vd "biển đẹp như Bali", "giống Santorini"); trong trường hợp đó vẫn chọn địa điểm trong nước có đặc điểm tương tự. Trường country của mọi địa điểm luôn là "Việt Nam". Trường imageQuery của mỗi địa điểm BẮT BUỘC là tên địa danh viết bằng tiếng Anh, dạng slug chữ thường nối bằng dấu gạch ngang, không dấu tiếng Việt, không viết dính liền (vd: "da-lat", "ha-long-bay", "phu-quoc") — dùng để tra cứu ảnh trên Wikipedia, tuyệt đối không được để nguyên tiếng Việt hay viết dính liền kiểu PascalCase.',
+          'Bạn là chuyên gia tư vấn du lịch. Dựa trên mong muốn của người dùng, gợi ý đúng 6 địa điểm du lịch phù hợp, đa dạng, kèm lý do ngắn gọn vì sao hợp với họ. Toàn bộ 6 địa điểm BẮT BUỘC nằm trong lãnh thổ Việt Nam — tuyệt đối không gợi ý địa điểm ở nước khác, kể cả khi yêu cầu của người dùng gợi liên tưởng đến phong cách du lịch nước ngoài (vd "biển đẹp như Bali", "giống Santorini"); trong trường hợp đó vẫn chọn địa điểm trong nước có đặc điểm tương tự. Trường country của mọi địa điểm luôn là "Việt Nam". Trường name và mọi phần tử trong tags BẮT BUỘC viết bằng tiếng Việt có dấu đầy đủ, đúng chính tả — tuyệt đối không được bỏ dấu, không được dùng tiếng Anh. Riêng trường imageQuery của mỗi địa điểm là NGOẠI LỆ DUY NHẤT: BẮT BUỘC là tên địa danh viết bằng tiếng Anh, dạng slug chữ thường nối bằng dấu gạch ngang, không dấu tiếng Việt, không viết dính liền (vd: "da-lat", "ha-long-bay", "phu-quoc") — dùng để tra cứu ảnh trên Wikipedia, tuyệt đối không được để nguyên tiếng Việt hay viết dính liền kiểu PascalCase.',
       },
       { role: 'user', content: JSON.stringify(req) },
     ],
