@@ -14,16 +14,32 @@ async function geocodeQuery(query: string): Promise<GeocodeResult | null> {
   return { lat: result.latitude, lon: result.longitude, resolvedName: result.name };
 }
 
+// Open-Meteo's geocoding search doesn't recognize the "TP." (Thành phố) abbreviation
+// Vietnamese place names commonly use for centrally-governed cities — e.g. "TP. Hồ Chí
+// Minh" matches nothing, but "Hồ Chí Minh" or the unabbreviated "Thành phố Hồ Chí Minh"
+// does. Strip it so region-based queries actually match.
+export function normalizeRegionForGeocode(region: string): string {
+  return region.replace(/^t\.?\s?p\.?\s+/i, '').trim();
+}
+
 export async function geocode(place: string, region?: string): Promise<GeocodeResult | null> {
-  const query = [place, region].filter(Boolean).join(', ');
+  const normalizedRegion = region ? normalizeRegionForGeocode(region) : region;
+  const query = [place, normalizedRegion].filter(Boolean).join(', ');
   if (!query) return null;
   try {
-    const result = await geocodeQuery(query);
-    if (result) return result;
-    // Fallback: region name may be stale (e.g. post-merger province rename)
-    // that doesn't match Open-Meteo's geocoding DB — retry with place alone.
-    if (region) return await geocodeQuery(place);
-    return null;
+    const combined = await geocodeQuery(query);
+    if (combined) return combined;
+    if (!normalizedRegion) return null;
+
+    // Fallback 1: region name may be stale (e.g. post-merger province rename) or the
+    // combined string doesn't match — retry with place alone.
+    const placeOnly = await geocodeQuery(place);
+    if (placeOnly) return placeOnly;
+
+    // Fallback 2: place may be a landmark/POI (a market, a temple, a specific street)
+    // that Open-Meteo's gazetteer has no entry for at all, under any phrasing — city-level
+    // weather from the region is still far more useful than no forecast.
+    return await geocodeQuery(normalizedRegion);
   } catch {
     return null;
   }
