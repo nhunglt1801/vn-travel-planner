@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stripGenericWords, isRelevantMatch, tokenize } from './wikipedia.js';
+import { stripGenericWords, isRelevantMatch, isExactMatch, tokenize } from './wikipedia.js';
 
 describe('tokenize', () => {
   it('bỏ dấu tiếng Việt thay vì coi dấu là ký tự phân tách', () => {
@@ -35,5 +35,20 @@ describe('isRelevantMatch', () => {
 
   it('từ chối khi query rỗng', () => {
     expect(isRelevantMatch('', 'Con Dao')).toBe(false);
+  });
+});
+
+describe('isExactMatch', () => {
+  it('chấp nhận khi tiêu đề khớp chính xác từng từ khoá', () => {
+    expect(isExactMatch('phu quoc', 'Phu Quoc')).toBe(true);
+  });
+
+  it('từ chối khi tiêu đề có thêm từ khác (vd tên sân bay trùng địa danh)', () => {
+    expect(isExactMatch('phu quoc', 'Phu Quoc International Airport')).toBe(false);
+    expect(isExactMatch('con dao', 'Con Dao Airport')).toBe(false);
+  });
+
+  it('từ chối khi query rỗng', () => {
+    expect(isExactMatch('', 'Phu Quoc')).toBe(false);
   });
 });

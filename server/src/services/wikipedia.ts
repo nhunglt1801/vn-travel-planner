@@ -35,12 +35,25 @@ export function isRelevantMatch(cleanedQuery: string, title: string): boolean {
   return queryTokens.every((token) => titleTokens.has(token));
 }
 
+export function isExactMatch(cleanedQuery: string, title: string): boolean {
+  const queryTokens = tokenize(cleanedQuery);
+  if (queryTokens.length === 0) return false;
+  const titleTokens = tokenize(title);
+  if (titleTokens.length !== queryTokens.length) return false;
+  const titleTokenSet = new Set(titleTokens);
+  return queryTokens.every((token) => titleTokenSet.has(token));
+}
+
 async function findEnglishTitle(cleanedQuery: string): Promise<string | null> {
-  const url = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(cleanedQuery)}&format=json&limit=3`;
+  const url = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(cleanedQuery)}&format=json&limit=10`;
   const res = await fetch(url);
   if (!res.ok) return null;
   const data = (await res.json()) as any;
   const titles: string[] = data?.[1] ?? [];
+
+  const exactMatch = titles.find((title) => isExactMatch(cleanedQuery, title));
+  if (exactMatch) return exactMatch;
+
   for (const title of titles) {
     if (isRelevantMatch(cleanedQuery, title)) return title;
   }
