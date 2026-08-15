@@ -3,11 +3,21 @@ interface UnsplashImageResult {
   alt: string;
 }
 
+// Unsplash's keyword search has no country/context awareness, so a Vietnamese
+// place name that happens to contain a syllable spelling an unrelated country
+// (e.g. "Thái" in "Thái Văn Lung" reads as "Thai"/Thailand once diacritics are
+// stripped for the slug) can return completely wrong-country photos. Appending
+// "vietnam" biases the search back toward the right country without needing an
+// exhaustive blocklist of every colliding Vietnamese syllable.
+export function buildUnsplashQuery(query: string): string {
+  return /vietnam/i.test(query) ? query : `${query} vietnam`;
+}
+
 export async function searchUnsplashImage(query: string): Promise<UnsplashImageResult | null> {
   const key = process.env.UNSPLASH_ACCESS_KEY;
   if (!key || !query) return null;
   try {
-    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1`;
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(buildUnsplashQuery(query))}&per_page=1`;
     const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}` } });
     if (!res.ok) return null;
     const data = (await res.json()) as any;
