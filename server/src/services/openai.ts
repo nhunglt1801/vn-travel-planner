@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { Place, SuggestRequest } from '../types/index.js';
+import type { Place, SuggestRequest, ItineraryRequest, ItineraryDay } from '../types/index.js';
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
@@ -91,4 +91,69 @@ export async function getSuggestions(req: SuggestRequest): Promise<Place[]> {
     throw new Error(`Kỳ vọng 6 địa điểm, nhận được ${parsed.places.length}`);
   }
   return parsed.places.map((place) => ({ ...place, name: cleanPlaceName(place.name) }));
+}
+
+function buildItinerarySchema(days: number) {
+  const slot = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      description: { type: 'string' },
+      imageQuery: { type: 'string' },
+    },
+    required: ['name', 'description', 'imageQuery'],
+    additionalProperties: false,
+  };
+
+  return {
+    type: 'object',
+    properties: {
+      days: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            date: { type: 'string' },
+            slots: {
+              type: 'object',
+              properties: { morning: slot, noon: slot, afternoon: slot, evening: slot },
+              required: ['morning', 'noon', 'afternoon', 'evening'],
+              additionalProperties: false,
+            },
+          },
+          required: ['date', 'slots'],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['days'],
+    additionalProperties: false,
+  };
+}
+
+export async function getItinerary(req: ItineraryRequest): Promise<ItineraryDay[]> {
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      {
+        role: 'system',
+        content:
+          'Bạn là chuyên gia lên lịch trình du lịch. Sinh lịch trình chi tiết đúng số ngày yêu cầu, mỗi ngày đúng 4 khung giờ Sáng/Trưa/Chiều/Tối, mỗi khung giờ là một địa điểm cụ thể trong khu vực đã chọn.',
+      },
+      { role: 'user', content: JSON.stringify(req) },
+    ],
+    response_format: {
+      type: 'json_schema',
+      json_schema: { name: 'itinerary', strict: true, schema: buildItinerarySchema(req.days) },
+    },
+  });
+
+  const content = completion.choices[0].message.content;
+  if (!content) throw new Error('OpenAI trả về nội dung rỗng');
+
+  const parsed = JSON.parse(content) as { days: ItineraryDay[] };
+  if (parsed.days.length !== req.days) {
+    throw new Error(`Kỳ vọng ${req.days} ngày, nhận được ${parsed.days.length}`);
+  }
+  return parsed.days;
 }
