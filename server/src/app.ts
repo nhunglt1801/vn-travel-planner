@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import suggestRouter from './routes/suggest.js';
 import imageRouter from './routes/image.js';
 import weatherRouter from './routes/weather.js';
+import itineraryRouter from './routes/itinerary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDist = path.join(__dirname, '../../client/dist');
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/api', suggestRouter);
 app.use('/api', imageRouter);
 app.use('/api', weatherRouter);
+app.use('/api', itineraryRouter);
 
 app.use(express.static(clientDist));
 app.get(/^(?!\/api).*/, (_req, res) => {
