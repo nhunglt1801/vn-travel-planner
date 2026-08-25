@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import type { SuggestRequest, Place } from './types';
+import type { SuggestRequest, ItineraryRequest, Place, ItineraryDay } from './types';
 import { InputScreen, createDefaultSuggestRequest } from './screens/InputScreen';
 import { SuggestionsScreen } from './screens/SuggestionsScreen';
+import { ItineraryScreen } from './screens/ItineraryScreen';
 import { DetailSheet } from './components/DetailSheet';
 import { fetchSuggestions } from './api/suggest';
+import { fetchItinerary } from './api/itinerary';
 
-type Screen = 'input' | 'suggestions';
+type Screen = 'input' | 'suggestions' | 'itinerary';
 
 function computeTripDates(startDate: string, days: number): string[] {
   const [year, month, day] = startDate.split('-').map(Number);
@@ -34,6 +36,12 @@ export default function App() {
 
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
 
+  const [itineraryPlaceName, setItineraryPlaceName] = useState('');
+  const [itineraryDays, setItineraryDays] = useState<ItineraryDay[] | null>(null);
+  const [itineraryLoading, setItineraryLoading] = useState(false);
+  const [itineraryError, setItineraryError] = useState<string | null>(null);
+  const [lastItineraryRequest, setLastItineraryRequest] = useState<ItineraryRequest | null>(null);
+
   async function loadSuggestions(req: SuggestRequest) {
     setSuggestLoading(true);
     setSuggestError(null);
@@ -54,6 +62,39 @@ export default function App() {
     loadSuggestions(req);
   }
 
+  async function loadItinerary(req: ItineraryRequest) {
+    setItineraryLoading(true);
+    setItineraryError(null);
+    setItineraryDays(null);
+    try {
+      const res = await fetchItinerary(req);
+      setItineraryDays(res.days);
+    } catch {
+      setItineraryError('Không tạo được lịch trình lúc này, thử lại nhé');
+    } finally {
+      setItineraryLoading(false);
+    }
+  }
+
+  function handleCreateItinerary() {
+    if (!selectedPlace) return;
+    const itineraryRequest: ItineraryRequest = {
+      placeName: selectedPlace.name,
+      region: selectedPlace.region,
+      country: selectedPlace.country,
+      days: request.days,
+      startDate: request.startDate,
+      budget: request.budget,
+      styles: request.styles,
+      companion: request.companion,
+    };
+    setItineraryPlaceName(selectedPlace.name);
+    setLastItineraryRequest(itineraryRequest);
+    setSelectedPlace(null);
+    setScreen('itinerary');
+    loadItinerary(itineraryRequest);
+  }
+
   return (
     <>
       {screen === 'input' && <InputScreen initialValue={request} onSubmit={handleSubmitRequest} />}
@@ -69,13 +110,24 @@ export default function App() {
         />
       )}
 
-      {selectedPlace && (
+      {screen === 'itinerary' && (
+        <ItineraryScreen
+          placeName={itineraryPlaceName}
+          days={itineraryDays}
+          loading={itineraryLoading}
+          error={itineraryError}
+          onRetry={() => lastItineraryRequest && loadItinerary(lastItineraryRequest)}
+          onBack={() => setScreen('suggestions')}
+        />
+      )}
+
+      {selectedPlace && screen === 'suggestions' && (
         <DetailSheet
           place={selectedPlace}
           region={selectedPlace.region || request.region || ''}
           dates={tripDates}
           onClose={() => setSelectedPlace(null)}
-          onCreateItinerary={() => setSelectedPlace(null)}
+          onCreateItinerary={handleCreateItinerary}
         />
       )}
     </>
