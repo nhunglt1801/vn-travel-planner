@@ -1,0 +1,42 @@
+.screen {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+.header {
+  margin-bottom: var(--space-md);
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  color: var(--color-charcoal);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 0 var(--space-sm);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.slotGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 640px) {
+  .slotGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .slotGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
