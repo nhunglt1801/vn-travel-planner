@@ -54,7 +54,7 @@ export function ItineraryScreen({
           {!loading &&
             activeDayData &&
             SLOT_LABELS.map(({ key, label }) => (
-              <TimeSlotCard key={key} label={label} slot={activeDayData.slots[key]} />
+              <TimeSlotCard key={`${activeDay}-${key}`} label={label} slot={activeDayData.slots[key]} />
             ))}
         </div>
       )}

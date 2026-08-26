@@ -93,13 +93,26 @@ export async function getSuggestions(req: SuggestRequest): Promise<Place[]> {
   return parsed.places.map((place) => ({ ...place, name: cleanPlaceName(place.name) }));
 }
 
-function buildItinerarySchema(days: number) {
+// Số ngày KHÔNG được ràng buộc qua JSON schema (không dùng minItems/maxItems trên
+// mảng `days`) — OpenAI Structured Outputs với `strict: true` không hỗ trợ hai
+// keyword đó (bài học từ lỗi Critical ở Plan 1). Số ngày thay vào đó được ràng
+// buộc qua system prompt và kiểm tra lại ở runtime bằng
+// `parsed.days.length !== req.days` bên dưới trong getItinerary.
+function buildItinerarySchema() {
   const slot = {
     type: 'object',
     properties: {
-      name: { type: 'string' },
+      name: {
+        type: 'string',
+        description:
+          "Tên riêng CHÍNH THỨC, NGUYÊN VĂN của MỘT địa điểm có thật trong khung giờ này của lịch trình, đủ nổi tiếng để tra cứu được trên bản đồ hoặc Wikipedia (thành phố, đảo, bãi biển, chợ, phố đi bộ, khu phố nổi tiếng, di tích...), viết bằng tiếng Việt có dấu đầy đủ, đúng chính tả. KHÔNG được ghép thêm bất kỳ cụm mô tả loại hình nào vào trước/sau tên địa danh, dù tên gốc có thật (vd sai: 'Khu phố ẩm thực Quận 7', 'Khu ẩm thực Chợ Lớn', 'Góc Phố Ẩm Thực Vĩnh Khánh', 'Bến Thành Market Food Court' — phải dùng đúng 'Quận 7', 'Chợ Lớn', 'Đường Vĩnh Khánh', 'Chợ Bến Thành'). Ví dụ đúng: 'Đà Lạt', 'Vịnh Hạ Long', 'Phú Quốc', 'Chợ Bến Thành', 'Phố đi bộ Nguyễn Huệ', 'Phố Tây Bùi Viện'. Ví dụ sai — KHÔNG được dùng: 'Da Lat', 'Ha Long Bay' (thiếu dấu); tên món ăn như 'Bún Bò Huế', 'Bánh Mì Huỳnh Hoa' (không phải địa danh, dù có thể mô tả trải nghiệm ẩm thực này trong trường description); tên một nhà hàng/quán ăn/cửa hàng cụ thể như 'Lẩu Dê Ninh Khương', 'Bún Chả Hương Liên' (không phải địa danh, không tra cứu được); một khái niệm khu vực tự đặt ra không chính thức như 'Quận 1 - Khu Đông Kinh Nghệ Thuật' (không phải tên có thật).",
+      },
       description: { type: 'string' },
-      imageQuery: { type: 'string' },
+      imageQuery: {
+        type: 'string',
+        description:
+          "Tên địa danh viết bằng tiếng Anh, dạng slug chữ thường, các từ nối bằng dấu gạch ngang, không dấu tiếng Việt, không viết dính liền. Ví dụ đúng: 'da-lat', 'ha-long-bay', 'phu-quoc'. Ví dụ sai: 'Đà Lạt', 'HaLongBay'.",
+      },
     },
     required: ['name', 'description', 'imageQuery'],
     additionalProperties: false,
@@ -138,13 +151,13 @@ export async function getItinerary(req: ItineraryRequest): Promise<ItineraryDay[
       {
         role: 'system',
         content:
-          'Bạn là chuyên gia lên lịch trình du lịch. Sinh lịch trình chi tiết đúng số ngày yêu cầu, mỗi ngày đúng 4 khung giờ Sáng/Trưa/Chiều/Tối, mỗi khung giờ là một địa điểm cụ thể trong khu vực đã chọn.',
+          'Bạn là chuyên gia lên lịch trình du lịch. Sinh lịch trình chi tiết đúng số ngày yêu cầu, mỗi ngày đúng 4 khung giờ Sáng/Trưa/Chiều/Tối, mỗi khung giờ là một địa điểm cụ thể trong khu vực đã chọn. QUY TẮC BẮT BUỘC cho tên địa điểm (trường name) của mỗi khung giờ: phải là tên riêng CHÍNH THỨC, NGUYÊN VĂN của một nơi có thật, tra cứu được trên bản đồ hoặc Wikipedia — TUYỆT ĐỐI KHÔNG được ghép thêm cụm mô tả loại hình vào trước/sau tên đó, dù tên gốc có thật (sai: "Khu phố ẩm thực Quận 7", "Khu ẩm thực Chợ Lớn", "Góc Phố Ẩm Thực Vĩnh Khánh", "Bến Thành Market Food Court" → phải dùng đúng "Quận 7", "Chợ Lớn", "Đường Vĩnh Khánh", "Chợ Bến Thành"); KHÔNG được dùng tên món ăn làm tên địa điểm (sai: "Bún Bò Huế", "Bánh Mì Huỳnh Hoa") — nếu khung giờ đó là trải nghiệm ẩm thực, hãy đặt tên là địa điểm có thật diễn ra trải nghiệm đó (vd "Chợ Bến Thành", "Phố Tây Bùi Viện") và mô tả món ăn/trải nghiệm cụ thể trong trường description; KHÔNG được bịa tên nhà hàng/quán ăn cụ thể (sai: "Lẩu Dê Ninh Khương", "Bún Chả Hương Liên"); KHÔNG được tự đặt khái niệm khu vực không chính thức (sai: "Quận 1 - Khu Đông Kinh Nghệ Thuật"). Trước khi trả lời, tự rà lại từng tên: nếu không chắc chắn tên đó tồn tại nguyên văn trên bản đồ hoặc Wikipedia, hãy đổi sang một địa danh có thật khác. Toàn bộ địa điểm BẮT BUỘC nằm trong lãnh thổ Việt Nam. Trường name BẮT BUỘC viết bằng tiếng Việt có dấu đầy đủ, đúng chính tả — tuyệt đối không được bỏ dấu, không được dùng tiếng Anh. Riêng trường imageQuery của mỗi khung giờ là NGOẠI LỆ DUY NHẤT: BẮT BUỘC là tên địa danh viết bằng tiếng Anh, dạng slug chữ thường nối bằng dấu gạch ngang, không dấu tiếng Việt, không viết dính liền (vd: "da-lat", "ha-long-bay", "phu-quoc") — dùng để tra cứu ảnh trên Wikipedia, tuyệt đối không được để nguyên tiếng Việt hay viết dính liền kiểu PascalCase.',
       },
       { role: 'user', content: JSON.stringify(req) },
     ],
     response_format: {
       type: 'json_schema',
-      json_schema: { name: 'itinerary', strict: true, schema: buildItinerarySchema(req.days) },
+      json_schema: { name: 'itinerary', strict: true, schema: buildItinerarySchema() },
     },
   });
 
@@ -155,5 +168,13 @@ export async function getItinerary(req: ItineraryRequest): Promise<ItineraryDay[
   if (parsed.days.length !== req.days) {
     throw new Error(`Kỳ vọng ${req.days} ngày, nhận được ${parsed.days.length}`);
   }
-  return parsed.days;
+  return parsed.days.map((day) => ({
+    ...day,
+    slots: {
+      morning: { ...day.slots.morning, name: cleanPlaceName(day.slots.morning.name) },
+      noon: { ...day.slots.noon, name: cleanPlaceName(day.slots.noon.name) },
+      afternoon: { ...day.slots.afternoon, name: cleanPlaceName(day.slots.afternoon.name) },
+      evening: { ...day.slots.evening, name: cleanPlaceName(day.slots.evening.name) },
+    },
+  }));
 }
