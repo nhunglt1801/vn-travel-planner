@@ -1,7 +1,7 @@
 .screen {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--space-md) var(--space-md) calc(var(--space-3xl) + var(--space-md));
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -125,8 +125,6 @@
 }
 
 .cta {
-  position: sticky;
-  bottom: var(--space-md);
   height: 56px;
   border-radius: var(--radius-pill);
   background: var(--color-coral);
