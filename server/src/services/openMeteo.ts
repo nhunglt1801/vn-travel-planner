@@ -14,6 +14,38 @@ async function geocodeQuery(query: string): Promise<GeocodeResult | null> {
   return { lat: result.latitude, lon: result.longitude, resolvedName: result.name };
 }
 
+// Open-Meteo's geocoding gazetteer indexes Vietnamese place names without diacritics
+// internally — searching with full diacritics (e.g. "Quảng Ninh", "Hạ Long") reliably
+// returns zero results, while the diacritic-stripped form ("Quang Ninh", "Ha Long")
+// matches correctly. Confirmed by direct comparison against the live API before fixing.
+export function stripDiacritics(text: string): string {
+  return text
+    .replace(/đ/gi, 'd')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+}
+
+// Open-Meteo's gazetteer indexes settlements/features by their base name, not by a
+// descriptive phrase — "Vịnh Hạ Long" ("the bay at Hạ Long") matches nothing, but the
+// underlying place "Hạ Long" does. The AI is explicitly instructed to use official,
+// verbatim place names (which legitimately include phrases like "Vịnh Hạ Long" or "Bãi
+// biển Mỹ Khê"), so this strips the leading generic descriptor before geocoding only —
+// display names elsewhere are untouched. Word-only, leading-position match, so compound
+// proper nouns where the descriptor isn't a prefix (e.g. "Côn Đảo") are left intact.
+const GEO_DESCRIPTOR_PREFIXES = ['bai bien', 'vinh', 'bai', 'nui', 'ho', 'song', 'thac'];
+
+export function stripGeoDescriptorPrefix(place: string): string {
+  const trimmed = place.trim();
+  const asciiLower = stripDiacritics(trimmed);
+  for (const prefix of GEO_DESCRIPTOR_PREFIXES) {
+    if (asciiLower.startsWith(`${prefix} `)) {
+      return trimmed.slice(prefix.length).trim();
+    }
+  }
+  return trimmed;
+}
+
 // Open-Meteo's geocoding search doesn't recognize the "TP." (Thành phố) abbreviation
 // Vietnamese place names commonly use for centrally-governed cities — e.g. "TP. Hồ Chí
 // Minh" matches nothing, but "Hồ Chí Minh" or the unabbreviated "Thành phố Hồ Chí Minh"
@@ -23,23 +55,29 @@ export function normalizeRegionForGeocode(region: string): string {
 }
 
 export async function geocode(place: string, region?: string): Promise<GeocodeResult | null> {
+  const geoPlace = stripGeoDescriptorPrefix(place);
   const normalizedRegion = region ? normalizeRegionForGeocode(region) : region;
-  const query = [place, normalizedRegion].filter(Boolean).join(', ');
+  const query = [geoPlace, normalizedRegion].filter(Boolean).join(', ');
   if (!query) return null;
   try {
     const combined = await geocodeQuery(query);
     if (combined) return combined;
-    if (!normalizedRegion) return null;
+
+    const asciiQuery = stripDiacritics(query);
+    const combinedAscii = await geocodeQuery(asciiQuery);
+    if (combinedAscii) return combinedAscii;
 
     // Fallback 1: region name may be stale (e.g. post-merger province rename) or the
     // combined string doesn't match — retry with place alone.
-    const placeOnly = await geocodeQuery(place);
+    const placeOnly = await geocodeQuery(stripDiacritics(geoPlace));
     if (placeOnly) return placeOnly;
+
+    if (!normalizedRegion) return null;
 
     // Fallback 2: place may be a landmark/POI (a market, a temple, a specific street)
     // that Open-Meteo's gazetteer has no entry for at all, under any phrasing — city-level
     // weather from the region is still far more useful than no forecast.
-    return await geocodeQuery(normalizedRegion);
+    return await geocodeQuery(stripDiacritics(normalizedRegion));
   } catch {
     return null;
   }
